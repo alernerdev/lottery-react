@@ -1,3 +1,7 @@
+/*
+  Nice to haves: this code does not handle rejection when the metamask dlg box prompts to proced/reject transaction submission
+  Also, the pick winner button should only come up for the manager of the contract
+*/
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
@@ -9,7 +13,8 @@ class App extends Component {
     manager: '',
     players: [],
     balance: '', // notice its a string
-    value: ''
+    value: '',
+    message: ''
   };
 
   constructor(props) {
@@ -30,11 +35,28 @@ class App extends Component {
   onSubmit = async (event) => {
     event.preventDefault();
 
+    this.setState({message: 'Waiting on transaction success (15-30 seconds) ...'});
+
     const accounts = await web3.eth.getAccounts();
+    // before making this call, make sure Metamask is unlocked -- not asking for password
     await lottery.methods.enter().send({
-      from: accounts[0],  // note that here the account IS used
+      from: accounts[0],
       value: web3.utils.toWei(this.state.value, 'ether')
-    })
+    });
+
+    this.setState({message: 'You have been entered into lottery. Good luck'});  
+  }
+
+  onPickWinner = async () => {
+    this.setState({message: 'Waiting on transaction success (15-30 seconds) ...'});
+
+    const accounts = await web3.eth.getAccounts();
+    // before making this call, make sure Metamask is unlocked -- not asking for password
+    await lottery.methods.pickWinner().send({
+      from: accounts[0]
+    });
+
+    this.setState({message: 'A winner has been picked'});  
   }
 
   render() {
@@ -55,8 +77,16 @@ class App extends Component {
             value = {this.state.value}
             onChange = {event => this.setState( { value: event.target.value})}
           />
-          <button>Enter</button>
+          <button onClick={this.onSubmit}>Enter</button>
         </form>
+
+        <hr/>
+
+        <h4>Time to pick a winner?</h4>
+        <button onClick={this.onPickWinner}>Pick Winner</button>
+        <hr/>>
+
+        <h1>{this.state.message}</h1>     
       </div>
     );
   }
